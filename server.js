@@ -7,7 +7,7 @@ const app = require("./App");
 const DB = process.env.DATABASE_CONNECTION;
 
 mongoose
-	.connect(DB, {
+	.connect(`${DB}`, {
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 		useFindAndModify: false,
