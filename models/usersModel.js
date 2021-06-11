@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const userSchema = mongoose.Schema({
 	firstName: {
@@ -34,12 +35,15 @@ const userSchema = mongoose.Schema({
 			message: "passwords do not  match",
 		},
 	},
+	passwordResetToken: String,
+	passwordResetExpired: Date,
 	active: Boolean,
 });
 //hashing the user password before saving it o the database
 userSchema.pre("save", async function (next) {
 	const salt = await bcrypt.genSalt();
 	this.password = await bcrypt.hash(this.password, salt);
+	this.confirmPassword = undefined;
 	next();
 });
 
@@ -56,6 +60,17 @@ userSchema.statics.login = async function (email, password) {
 	throw Error("email is not registered");
 };
 
+userSchema.methods.createPasswordResetToken = function () {
+	const resetToken = crypto.randomBytes(32).toString("hex");
+	this.passwordResetToken = crypto
+		.createHash("sha256")
+		.update(resetToken)
+		.digest("hex");
+	console.log({ resetToken }, this.passwordResetToken);
+	this.passwordResetExpired = Date.now() + 10 * 60 * 1000;
+
+	return resetToken;
+};
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
